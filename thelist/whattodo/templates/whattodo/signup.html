@@ -1,0 +1,640 @@
+{% extends 'whattodo/base.html' %}
+
+{% block title %}Sign Up{% endblock %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - TaskManager</title>
+    
+    <!-- ADDED: Critical CSS to prevent white flash -->
+    <style>
+        /* Critical CSS - Loaded first to prevent flash */
+        html, body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%) !important;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        /* Hide content until fully loaded */
+        .page-content {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        
+        .page-loaded .page-content {
+            opacity: 1;
+        }
+    </style>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'slide-down': 'slideDown 0.4s ease-out',
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                        'shake': 'shake 0.5s ease-in-out',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(92, 246, 215, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(92, 246, 159, 0.6); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%);
+            background-size: 400% 400%;
+        }
+       
+        .input-group {
+            position: relative;
+        }
+        
+        .input-label {
+            position: absolute;
+            left: 12px;
+            top: 12px;
+            color: rgba(181, 245, 253, 0.7);
+            transition: all 0.2s ease;
+            pointer-events: none;
+            font-size: 14px;
+        }
+        
+        .form-input:focus + .input-label,
+        .form-input:not(:placeholder-shown) + .input-label {
+            transform: translateY(-20px) scale(0.85);
+            color: #5cf6e2;
+            background: rgba(15, 100, 49, 0.8);
+            padding: 0 4px;
+            border-radius: 2px;
+        }
+        
+        .form-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(92, 246, 210, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #1adda6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(92, 246, 233, 0.1);
+        }
+        
+        .form-input.error {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(20, 184, 166, 0.4);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.7;
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        /* Error message styles */
+        .field-error {
+            color: #fca5a5;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+        
+        /* ADDED: Loading screen styles */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+        }
+        
+        .loading-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(20, 184, 166, 0.3);
+            border-top: 3px solid #14b8a6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen gradient-bg font-sans overflow-x-hidden">
+    <!-- ADDED: Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- ADDED: Main Content Wrapper -->
+    <div class="page-content">
+        <div class="min-h-screen flex items-center justify-center p-4 relative z-10">
+            <div class="w-full max-w-md">
+                <!-- Header -->
+                <div class="text-center mb-8 animate-slide-down">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center animate-pulse-glow">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                        </svg>
+                    </div>
+                    <h1 class="text-3xl font-bold text-white mb-2">Create Account</h1>
+                    <p class="text-emerald-200">Join us and start organizing your tasks</p>
+                </div>
+
+                <!-- Error Messages -->
+                {% if messages %}
+                    <div class="mb-6 animate-slide-up">
+                        {% for message in messages %}
+                            <div class="glass-effect rounded-xl p-4 mb-3 border-l-4 {% if message.tags == 'error' %}border-red-400{% else %}border-green-400{% endif %} animate-shake">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 {% if message.tags == 'error' %}text-red-300{% else %}text-green-300{% endif %} mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        {% if message.tags == 'error' %}
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                        {% else %}
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                        {% endif %}
+                                    </svg>
+                                    <span class="text-white text-sm">{{ message }}</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Form Errors (Django form errors) -->
+                {% if form.errors %}
+                    <div class="mb-6 animate-slide-up">
+                        <div class="glass-effect rounded-xl p-4 border-l-4 border-red-400 animate-shake">
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-red-300 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                </svg>
+                                <div class="text-white text-sm">
+                                    <p class="font-medium mb-1">Please fix the following errors:</p>
+                                    <ul class="space-y-1">
+                                        {% for field, errors in form.errors.items %}
+                                            {% for error in errors %}
+                                                <li>• {{ error }}</li>
+                                            {% endfor %}
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- FIXED: Signup Form with proper structure -->
+                <div class="glass-effect rounded-2xl p-6 sm:p-8 animate-slide-up">
+                    <form method="post" class="space-y-6" novalidate id="signupForm">
+                        {% csrf_token %}
+                        
+                        <!-- Name Fields -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="input-group">
+                                <input 
+                                    type="text" 
+                                    name="first_name" 
+                                    id="first_name"
+                                    class="form-input w-full px-3 py-3 rounded-xl text-white placeholder-transparent {% if form.first_name.errors %}error{% endif %}"
+                                    placeholder="First Name"
+                                    value="{{ form.first_name.value|default:'' }}"
+                                    required
+                                >
+                                <label for="first_name" class="input-label">First Name</label>
+                                {% if form.first_name.errors %}
+                                    {% for error in form.first_name.errors %}
+                                        <span class="field-error">{{ error }}</span>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div class="input-group">
+                                <input 
+                                    type="text" 
+                                    name="last_name" 
+                                    id="last_name"
+                                    class="form-input w-full px-3 py-3 rounded-xl text-white placeholder-transparent {% if form.last_name.errors %}error{% endif %}"
+                                    placeholder="Last Name"
+                                    value="{{ form.last_name.value|default:'' }}"
+                                >
+                                <label for="last_name" class="input-label">Last Name (Optional)</label>
+                                {% if form.last_name.errors %}
+                                    {% for error in form.last_name.errors %}
+                                        <span class="field-error">{{ error }}</span>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Username -->
+                        <div class="input-group">
+                            <input 
+                                type="text" 
+                                name="username" 
+                                id="username"
+                                class="form-input w-full px-3 py-3 rounded-xl text-white placeholder-transparent {% if form.username.errors %}error{% endif %}"
+                                placeholder="Username"
+                                value="{{ form.username.value|default:'' }}"
+                                required
+                            >
+                            <label for="username" class="input-label">Username</label>
+                            {% if form.username.errors %}
+                                {% for error in form.username.errors %}
+                                    <span class="field-error">{{ error }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <!-- Email -->
+                        <div class="input-group">
+                            <input 
+                                type="email" 
+                                name="email" 
+                                id="email"
+                                class="form-input w-full px-3 py-3 rounded-xl text-white placeholder-transparent {% if form.email.errors %}error{% endif %}"
+                                placeholder="Email"
+                                value="{{ form.email.value|default:'' }}"
+                                required
+                            >
+                            <label for="email" class="input-label">Email Address</label>
+                            {% if form.email.errors %}
+                                {% for error in form.email.errors %}
+                                    <span class="field-error">{{ error }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <!-- Password Fields -->
+                        <div class="space-y-4">
+                            <div class="input-group">
+                                <input 
+                                    type="password" 
+                                    name="password1" 
+                                    id="password1"
+                                    class="form-input w-full px-3 py-3 rounded-xl text-white placeholder-transparent {% if form.password1.errors %}error{% endif %}"
+                                    placeholder="Password"
+                                    required
+                                >
+                                <label for="password1" class="input-label">Password</label>
+                                {% if form.password1.errors %}
+                                    {% for error in form.password1.errors %}
+                                        <span class="field-error">{{ error }}</span>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div class="input-group">
+                                <input 
+                                    type="password" 
+                                    name="password2" 
+                                    id="password2"
+                                    class="form-input w-full px-3 py-3 rounded-xl text-white placeholder-transparent {% if form.password2.errors %}error{% endif %}"
+                                    placeholder="Confirm Password"
+                                    required
+                                >
+                                <label for="password2" class="input-label">Confirm Password</label>
+                                {% if form.password2.errors %}
+                                    {% for error in form.password2.errors %}
+                                        <span class="field-error">{{ error }}</span>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Password Requirements -->
+                        <div class="text-xs text-white bg-emerald-500/20 rounded-lg p-3">
+                            <p class="font-medium mb-1">Password must contain:</p>
+                            <ul class="space-y-1">
+                                <li>• At least 8 characters</li>
+                                <li>• Both letters and numbers</li>
+                                <li>• Match the confirmation password</li>
+                            </ul>
+                        </div>
+
+                        <!-- FIXED: Submit Button is now INSIDE the form -->
+                        <button 
+                            type="submit" 
+                            id="submitBtn"
+                            class="btn-primary w-full py-3 px-6 rounded-xl text-white font-semibold text-lg"
+                        >
+                            Create Account
+                        </button>
+                    </form>
+
+                    <!-- Login Link -->
+                    <div class="mt-6 pt-6 border-t border-white/20 text-center">
+                        <p class="text-white">
+                            Already have an account? 
+                            <a href="{% url 'whattodo:login' %}" class="text-white hover:text-emerald-300 transition-colors duration-200 font-medium">
+                                Sign in
+                            </a>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="mt-8 text-center text-white text-sm animate-fade-in">
+                    <p>By creating an account, you agree to our Terms of Service and Privacy Policy</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ENHANCED: More robust loading screen management
+        function hideLoadingScreen() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            const body = document.body;
+            
+            if (loadingScreen && !body.classList.contains('page-loaded')) {
+                loadingScreen.classList.add('fade-out');
+                body.classList.add('page-loaded');
+                
+                setTimeout(() => {
+                    if (loadingScreen) loadingScreen.remove();
+                }, 500);
+            }
+        }
+
+        // Hide loading screen when everything is loaded
+        window.addEventListener('load', hideLoadingScreen);
+        
+        // Hide loading screen when DOM is ready (faster fallback)
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', hideLoadingScreen);
+        } else {
+            // DOM is already ready
+            hideLoadingScreen();
+        }
+
+        // Final fallback timer
+        setTimeout(hideLoadingScreen, 1500);
+
+        // Enhanced form validation and UX
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('signupForm');
+            const inputs = document.querySelectorAll('.form-input');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // Add focus/blur effects
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.parentElement.classList.add('focused');
+                    this.classList.remove('error');
+                });
+                
+                input.addEventListener('blur', function() {
+                    this.parentElement.classList.remove('focused');
+                    validateField(this);
+                });
+                
+                // Check if input has value on page load
+                if (input.value) {
+                    input.classList.add('has-value');
+                }
+                
+                // Real-time input validation
+                input.addEventListener('input', function() {
+                    if (this.value) {
+                        this.classList.add('has-value');
+                    } else {
+                        this.classList.remove('has-value');
+                    }
+                    
+                    // Clear error states on input
+                    this.classList.remove('error');
+                    const errorMsg = this.parentElement.querySelector('.field-error');
+                    if (errorMsg) {
+                        errorMsg.remove();
+                    }
+                });
+            });
+            
+            // Enhanced password validation
+            const password1 = document.getElementById('password1');
+            const password2 = document.getElementById('password2');
+            
+            function validatePasswords() {
+                const p1 = password1.value;
+                const p2 = password2.value;
+                
+                // Clear previous errors
+                password1.classList.remove('error');
+                password2.classList.remove('error');
+                
+                // Remove existing error messages
+                const existingErrors = document.querySelectorAll('.password-error');
+                existingErrors.forEach(error => error.remove());
+                
+                if (p2 && p1 !== p2) {
+                    password2.classList.add('error');
+                    showFieldError(password2, 'Passwords do not match');
+                    return false;
+                }
+                
+                if (p1 && p1.length < 8) {
+                    password1.classList.add('error');
+                    showFieldError(password1, 'Password must be at least 8 characters');
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            function validateField(field) {
+                const value = field.value.trim();
+                
+                // Remove existing error
+                field.classList.remove('error');
+                const existingError = field.parentElement.querySelector('.field-error');
+                if (existingError) {
+                    existingError.remove();
+                }
+                
+                // Field-specific validation
+                if (field.hasAttribute('required') && !value) {
+                    field.classList.add('error');
+                    showFieldError(field, 'This field is required');
+                    return false;
+                }
+                
+                if (field.type === 'email' && value) {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(value)) {
+                        field.classList.add('error');
+                        showFieldError(field, 'Please enter a valid email address');
+                        return false;
+                    }
+                }
+                
+                return true;
+            }
+            
+            function showFieldError(field, message) {
+                const errorElement = document.createElement('span');
+                errorElement.className = 'field-error password-error';
+                errorElement.textContent = message;
+                field.parentElement.appendChild(errorElement);
+            }
+            
+            // Password validation events
+            password1.addEventListener('input', validatePasswords);
+            password2.addEventListener('input', validatePasswords);
+            
+            // Form submission with enhanced validation
+            form.addEventListener('submit', function(e) {
+                let isValid = true;
+                
+                // Validate all fields
+                inputs.forEach(input => {
+                    if (!validateField(input)) {
+                        isValid = false;
+                    }
+                });
+                
+                // Validate passwords specifically
+                if (!validatePasswords()) {
+                    isValid = false;
+                }
+                
+                if (!isValid) {
+                    e.preventDefault();
+                    
+                    // Shake the form to indicate errors
+                    form.classList.add('animate-shake');
+                    setTimeout(() => {
+                        form.classList.remove('animate-shake');
+                    }, 500);
+                    
+                    // Focus first error field
+                    const firstError = form.querySelector('.form-input.error');
+                    if (firstError) {
+                        firstError.focus();
+                    }
+                    
+                    return false;
+                }
+                
+                // Show loading state
+                submitBtn.innerHTML = `
+                    <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Creating Account...
+                `;
+                submitBtn.disabled = true;
+            });
+
+            // Username availability check (optional enhancement)
+            const username = document.getElementById('username');
+            let usernameTimeout;
+            
+            username.addEventListener('input', function() {
+                const value = this.value.trim();
+                
+                // Clear previous timeout
+                clearTimeout(usernameTimeout);
+                
+                if (value.length >= 3) {
+                    // Debounce username check
+                    usernameTimeout = setTimeout(() => {
+                        checkUsernameAvailability(value);
+                    }, 500);
+                }
+            });
+            
+            function checkUsernameAvailability(username) {
+                // Optional: Add AJAX call to check username availability
+                // This would require a Django endpoint
+                fetch('/check-username/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken(),
+                    },
+                    body: JSON.stringify({username: username})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const usernameField = document.getElementById('username');
+                    if (!data.available) {
+                        usernameField.classList.add('error');
+                        showFieldError(usernameField, 'Username is already taken');
+                    }
+                });
+            }
+            
+            function getCsrfToken() {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+                return csrfToken ? csrfToken.value : '';
+            }
+        });
+    </script>
+</body>
+{% endblock %}

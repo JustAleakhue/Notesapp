@@ -1,0 +1,1026 @@
+{% extends 'whattodo/base.html' %}
+
+{% block title %}Create New List{% endblock %}
+
+{% block content %}
+<head>
+    <style>
+        /* Critical CSS - Loaded first to prevent flash */
+        html, body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%) !important;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        /* Hide content until fully loaded */
+        .page-content {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        
+        .page-loaded .page-content {
+            opacity: 1;
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'slide-down': 'slideDown 0.4s ease-out',
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'bounce-subtle': 'bounceSubtle 0.5s ease-out',
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                        'scale-in': 'scaleIn 0.2s ease-out',
+                        'shimmer': 'shimmer 2s infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes bounceSubtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(20, 184, 166, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(20, 184, 166, 0.6); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: calc(200px + 100%) 0; }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%);
+            background-size: 400% 400%;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .form-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(20, 184, 166, 0.6);
+            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+            outline: none;
+        }
+
+        .form-input.error {
+            border-color: rgba(239, 68, 68, 0.6);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(20, 184, 166, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .floating-icon {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .character-counter {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+            transition: color 0.2s ease;
+        }
+
+        .character-counter.warning {
+            color: #fbbf24;
+        }
+
+        .character-counter.danger {
+            color: #ef4444;
+        }
+
+        .form-section {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .form-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .form-section.valid::before {
+            left: 100%;
+        }
+
+        .custom-select {
+            position: relative;
+            display: block;
+        }
+
+        .custom-select-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            width: 100%;
+            text-align: left;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .custom-select-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .custom-select-button:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(20, 184, 166, 0.6);
+            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+            outline: none;
+        }
+
+        .custom-select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            margin-top: 4px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .custom-select-dropdown.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .custom-select-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            color: white;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .custom-select-option:last-child {
+            border-bottom: none;
+        }
+
+        .custom-select-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .custom-select-option.selected {
+            background: rgba(20, 184, 166, 0.2);
+            border-left: 4px solid #14b8a6;
+        }
+
+        .priority-icon {
+            font-size: 1.2em;
+            width: 20px;
+            text-align: center;
+        }
+
+        .priority-text {
+            font-weight: 500;
+        }
+
+        .priority-description {
+            font-size: 0.85em;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .toast {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            min-width: 320px;
+            animation: slide-down 0.4s ease-out;
+        }
+
+        @media (max-width: 640px) {
+            .toast {
+                left: 1rem;
+                right: 1rem;
+                top: 1rem;
+                min-width: auto;
+            }
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: inherit;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .form-progress {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: linear-gradient(90deg, #14b8a6, #0d9488);
+            transition: width 0.5s ease;
+            border-radius: 0 2px 2px 0;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .glass-effect {
+                border-radius: 1rem;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen gradient-bg font-sans overflow-x-hidden">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header Section -->
+        <div class="text-center mb-12 animate-slide-down">
+            <div class="floating-icon inline-block mb-6">
+                <div class="w-20 h-20 bg-gradient-to-br from-primary-400 to-primary-600 rounded-2xl flex items-center justify-center shadow-2xl">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                </div>
+            </div>
+            <h1 class="text-4xl lg:text-6xl font-bold bg-gradient-to-r from-white to-primary-100 bg-clip-text text-transparent mb-4">
+                Create New Note
+            </h1>
+            <p class="text-slate-200 text-lg lg:text-xl max-w-2xl mx-auto">
+                Transform your ideas into actionable tasks and bring order to your busy life
+            </p>
+        </div>
+
+        <!-- Toast Container -->
+        <div id="toast-container"></div>
+
+        <!-- Main Form Card -->
+        <div class="glass-effect rounded-3xl shadow-2xl overflow-hidden animate-slide-up">
+            <div class="p-8 lg:p-12 relative">
+                <!-- Loading Overlay -->
+                <div class="loading-overlay" id="loadingOverlay">
+                    <div class="text-center">
+                        <div class="spinner mx-auto mb-4"></div>
+                        <div class="text-white font-medium">Creating your note...</div>
+                    </div>
+                </div>
+
+                <form method="POST" class="space-y-8" id="createListForm" novalidate>
+                    <!-- CSRF Token (you'll need to add this from your Django template) -->
+                    {% csrf_token %}
+                    
+                    <!-- Title Field -->
+                    <div class="form-section" data-field="title">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
+                                <span class="text-white font-bold text-sm">1</span>
+                            </div>
+                            <label for="id_title" class="text-lg font-bold text-white">
+                                What's your note about? 
+                            </label>
+                        </div>
+                        <div class="relative">
+                            <input type="text" 
+                                   id="id_title" 
+                                   name="title" 
+                                   value=""
+                                   placeholder="e.g., Weekend Adventure Plans, Work Projects, Shopping List"
+                                   class="form-input w-full px-6 py-4 rounded-xl text-lg font-medium transition-all duration-300"
+                                   maxlength="200"
+                                   required
+                                   autocomplete="off">                        </div>
+                    </div>
+
+                    <!-- Description Field -->
+                    <div class="form-section" data-field="description">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
+                                <span class="text-white font-bold text-sm">2</span>
+                            </div>
+                            <label for="id_description" class="text-lg font-bold text-white">
+                                Tell us more about it
+                            </label>
+                        </div>
+                        <div class="relative">
+                            <textarea id="id_description" 
+                                      name="description" 
+                                      rows="4"
+                                      placeholder="What's the purpose? Any special notes or context you'd like to remember?"
+                                      class="form-input w-full px-6 py-4 rounded-xl resize-none transition-all duration-300"
+                                      maxlength="500"></textarea>
+                        </div>
+                    </div>
+                    <!-- Action Buttons -->
+                    <div class="pt-8">
+                        <div class="flex flex-col sm:flex-row gap-4">
+                        <form method="POST" action="{% url 'whattodo:create_list' %}">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="btn-primary flex-1 px-8 py-4 rounded-xl font-bold text-lg text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                                    id="submitBtn">
+                                <span class="flex items-center justify-center gap-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                        <polyline points="22,4 12,14.01 9,11.01"/>
+                                    </svg>
+                                    <span id="submitText">Create My Note</span>
+                                </span>
+                            </button>
+                        </form>
+                            
+                            <button type="button"
+                                    onclick="history.back()" 
+                                    class="btn-secondary flex-1 text-center px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m15 18-6-6 6-6"/>
+                                </svg>
+                                Back to Notes
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Quick Actions Card -->
+        <div class="glass-effect rounded-3xl shadow-2xl mt-8 p-8 animate-fade-in">
+            <div class="text-center">
+                <h3 class="text-xl font-bold text-white mb-4">Need inspiration?</h3>
+                <div class="flex flex-wrap justify-center gap-3">
+                    <button class="template-btn px-4 py-2 bg-primary-500/20 text-primary-200 rounded-lg hover:bg-primary-500/30 transition-all duration-200 text-sm font-medium border border-primary-400/30" data-template="Daily Tasks">
+                        📅 Daily Tasks
+                    </button>
+                    <button class="template-btn px-4 py-2 bg-blue-500/20 text-blue-200 rounded-lg hover:bg-blue-500/30 transition-all duration-200 text-sm font-medium border border-blue-400/30" data-template="Weekend Plans">
+                        🏖️ Weekend Plans
+                    </button>
+                    <button class="template-btn px-4 py-2 bg-green-500/20 text-green-200 rounded-lg hover:bg-green-500/30 transition-all duration-200 text-sm font-medium border border-green-400/30" data-template="Shopping List">
+                        🛒 Shopping List
+                    </button>
+                    <button class="template-btn px-4 py-2 bg-purple-500/20 text-purple-200 rounded-lg hover:bg-purple-500/30 transition-all duration-200 text-sm font-medium border border-purple-400/30" data-template="Work Projects">
+                        💼 Work Projects
+                    </button>
+                    <button class="template-btn px-4 py-2 bg-yellow-500/20 text-yellow-200 rounded-lg hover:bg-yellow-500/30 transition-all duration-200 text-sm font-medium border border-yellow-400/30" data-template="Goals & Dreams">
+                        ⭐ Goals & Dreams
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Message -->
+        <div class="text-center mt-12 animate-fade-in">
+            <p class="text-slate-400 text-sm">
+                Ready to transform your productivity? Create your first note and start achieving more! ✨
+            </p>
+        </div>
+    </div>
+
+    <!-- Enhanced JavaScript -->
+    <script>
+        class CreateListManager {
+            constructor() {
+                this.form = document.getElementById('createListForm');
+                this.submitBtn = document.getElementById('submitBtn');
+                this.submitText = document.getElementById('submitText');
+                this.loadingOverlay = document.getElementById('loadingOverlay');
+                this.progressBar = document.getElementById('formProgress');
+                
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.setupCharacterCounters();
+                this.setupFormValidation();
+                this.setupTemplateButtons();
+                this.setupProgressTracking();
+                this.setMinDateTime();
+                this.setupAutoSave();
+            }
+
+            setupEventListeners() {
+                // Form submission
+                this.form.addEventListener('submit', this.handleSubmit.bind(this));
+
+                // Real-time validation
+                this.form.querySelectorAll('input, textarea, select').forEach(field => {
+                    field.addEventListener('input', this.validateField.bind(this, field));
+                    field.addEventListener('blur', this.validateField.bind(this, field));
+                    field.addEventListener('focus', this.clearFieldErrors.bind(this, field));
+                });
+
+                // Auto-resize textarea
+                const textarea = document.getElementById('id_description');
+                if (textarea) {
+                    textarea.addEventListener('input', this.autoResizeTextarea.bind(this));
+                }
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', this.handleKeyboard.bind(this));
+            }
+
+            setupCharacterCounters() {
+                const titleInput = document.getElementById('id_title');
+                const descInput = document.getElementById('id_description');
+                const titleCounter = document.getElementById('titleCounter');
+                const descCounter = document.getElementById('descriptionCounter');
+
+                if (titleInput && titleCounter) {
+                    const updateTitleCounter = () => {
+                        const count = titleInput.value.length;
+                        titleCounter.textContent = `${count} / 200`;
+                        
+                        if (count > 180) {
+                            titleCounter.className = 'character-counter danger';
+                        } else if (count > 150) {
+                            titleCounter.className = 'character-counter warning';
+                        } else {
+                            titleCounter.className = 'character-counter';
+                        }
+                    };
+                    
+                    titleInput.addEventListener('input', updateTitleCounter);
+                    updateTitleCounter(); // Initial count
+                }
+
+                if (descInput && descCounter) {
+                    const updateDescCounter = () => {
+                        const count = descInput.value.length;
+                        descCounter.textContent = `${count} / 500`;
+                        
+                        if (count > 450) {
+                            descCounter.className = 'character-counter danger';
+                        } else if (count > 400) {
+                            descCounter.className = 'character-counter warning';
+                        } else {
+                            descCounter.className = 'character-counter';
+                        }
+                    };
+                    
+                    descInput.addEventListener('input', updateDescCounter);
+                    updateDescCounter(); // Initial count
+                }
+            }
+
+            setupFormValidation() {
+                // Real-time validation rules
+                this.validationRules = {
+                    title: {
+                        required: true,
+                        minLength: 3,
+                        maxLength: 200,
+                        message: 'Title must be between 3 and 200 characters'
+                    },
+                    description: {
+                        maxLength: 500,
+                        message: 'Description must be less than 500 characters'
+                    },
+                    due_date: {
+                        futureDate: true,
+                        message: 'Due date cannot be in the past'
+                    }
+                };
+            }
+
+            setupTemplateButtons() {
+                const templateBtns = document.querySelectorAll('.template-btn');
+                templateBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const template = btn.dataset.template;
+                        this.applyTemplate(template);
+                    });
+                });
+            }
+
+            setupProgressTracking() {
+                const fields = this.form.querySelectorAll('input[required], textarea, select');
+                
+                const updateProgress = () => {
+                    let completedFields = 0;
+                    let totalFields = 0;
+                    
+                    fields.forEach(field => {
+                        totalFields++;
+                        if (field.value.trim() !== '') {
+                            completedFields++;
+                        }
+                    });
+                    
+                    const progress = totalFields > 0 ? (completedFields / totalFields) * 100 : 0;
+                    this.progressBar.style.width = `${progress}%`;
+                };
+
+                fields.forEach(field => {
+                    field.addEventListener('input', updateProgress);
+                });
+
+                updateProgress(); // Initial progress
+            }
+
+            applyTemplate(template) {
+                const titleInput = document.getElementById('id_title');
+                const descInput = document.getElementById('id_description');
+                const prioritySelect = document.getElementById('id_priority');
+
+                const templates = {
+                    'Daily Tasks': {
+                        title: 'Daily Tasks - ' + new Date().toLocaleDateString(),
+                        description: 'My daily to-do items and routine tasks to complete today.',
+                        priority: 'medium'
+                    },
+                    'Weekend Plans': {
+                        title: 'Weekend Adventure Plans',
+                        description: 'Fun activities, errands, and relaxation for the weekend.',
+                        priority: 'low'
+                    },
+                    'Shopping List': {
+                        title: 'Shopping List - ' + new Date().toLocaleDateString(),
+                        description: 'Items to buy on my next shopping trip.',
+                        priority: 'medium'
+                    },
+                    'Work Projects': {
+                        title: 'Work Projects & Deadlines',
+                        description: 'Important work tasks and project milestones to track.',
+                        priority: 'high'
+                    },
+                    'Goals & Dreams': {
+                        title: 'Goals & Dreams to Achieve',
+                        description: 'Long-term aspirations and steps to make them reality.',
+                        priority: 'medium'
+                    }
+                };
+
+                const templateData = templates[template];
+                if (templateData) {
+                    titleInput.value = templateData.title;
+                    descInput.value = templateData.description;
+                    prioritySelect.value = templateData.priority;
+
+                    // Trigger events to update counters and validation
+                    titleInput.dispatchEvent(new Event('input'));
+                    descInput.dispatchEvent(new Event('input'));
+                    
+                    // Add visual feedback
+                    this.showToast('Template applied! Feel free to customize it.', 'success');
+                    
+                    // Focus on title for editing
+                    titleInput.focus();
+                    titleInput.select();
+                }
+            }
+
+            validateField(field) {
+                const fieldName = field.name;
+                const value = field.value.trim();
+                const rules = this.validationRules[fieldName];
+
+                if (!rules) return true;
+
+                let isValid = true;
+                let errorMessage = '';
+
+                // Required check
+                if (rules.required && !value) {
+                    isValid = false;
+                    errorMessage = `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} is required`;
+                }
+
+                // Length checks
+                if (rules.minLength && value.length < rules.minLength) {
+                    isValid = false;
+                    errorMessage = `Minimum ${rules.minLength} characters required`;
+                }
+
+                if (rules.maxLength && value.length > rules.maxLength) {
+                    isValid = false;
+                    errorMessage = `Maximum ${rules.maxLength} characters allowed`;
+                }
+
+                // Date check
+                if (rules.futureDate && value) {
+                    const selectedDate = new Date(value);
+                    const now = new Date();
+                    if (selectedDate < now) {
+                        isValid = false;
+                        errorMessage = 'Date cannot be in the past';
+                    }
+                }
+
+                // Update field appearance
+                if (isValid) {
+                    field.classList.remove('error');
+                    field.classList.add('success');
+                    this.markSectionValid(field);
+                } else {
+                    field.classList.remove('success');
+                    field.classList.add('error');
+                    if (errorMessage) {
+                        this.showFieldError(field, errorMessage);
+                    }
+                }
+
+                return isValid;
+            }
+
+            clearFieldErrors(field) {
+                field.classList.remove('error');
+                const existingError = field.parentElement.querySelector('.field-error');
+                if (existingError) {
+                    existingError.remove();
+                }
+            }
+
+            showFieldError(field, message) {
+                this.clearFieldErrors(field);
+                
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'field-error mt-2 flex items-center gap-2 text-red-300 text-sm animate-slide-down';
+                errorDiv.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>${message}</span>
+                `;
+                
+                field.parentElement.appendChild(errorDiv);
+            }
+
+            markSectionValid(field) {
+                const section = field.closest('.form-section');
+                if (section) {
+                    section.classList.add('valid');
+                    setTimeout(() => {
+                        section.classList.remove('valid');
+                    }, 500);
+                }
+            }
+
+            autoResizeTextarea(event) {
+                const textarea = event.target;
+                textarea.style.height = 'auto';
+                textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+            }
+
+            setMinDateTime() {
+                const dueDateInput = document.getElementById('id_due_date');
+                if (dueDateInput) {
+                    const now = new Date();
+                    // Add 1 hour to current time as minimum
+                    now.setHours(now.getHours() + 1);
+                    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                    dueDateInput.min = now.toISOString().slice(0, 16);
+                }
+            }
+
+            setupAutoSave() {
+                // Auto-save form data
+                const fields = this.form.querySelectorAll('input, textarea, select');
+                const savedData = JSON.parse(localStorage.getItem('createListForm') || '{}');
+                
+                // Restore saved data
+                if (Object.keys(savedData).length > 0) {
+                    Object.keys(savedData).forEach(key => {
+                        const field = document.querySelector(`[name="${key}"]`);
+                        if (field && !field.value) { // Only if field is empty
+                            field.value = savedData[key];
+                            field.dispatchEvent(new Event('input'));
+                        }
+                    });
+                }
+
+                // Save on input
+                fields.forEach(field => {
+                    field.addEventListener('input', () => {
+                        const formData = {};
+                        fields.forEach(f => {
+                            if (f.value.trim()) {
+                                formData[f.name] = f.value;
+                            }
+                        });
+                        localStorage.setItem('createListForm', JSON.stringify(formData));
+                    });
+                });
+            }
+
+            handleKeyboard(event) {
+                // Ctrl/Cmd + Enter to submit
+                if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                    event.preventDefault();
+                    this.form.requestSubmit();
+                }
+
+                // Escape to cancel
+                if (event.key === 'Escape') {
+                    const confirmation = confirm('Are you sure you want to go back? Any unsaved changes will be lost.');
+                    if (confirmation) {
+                        window.location.href = document.querySelector('a[href*="my_lists"]')?.href || '/';
+                    }
+                }
+            }
+
+            async handleSubmit(event) {
+                event.preventDefault();
+
+                // Gather inputs
+                const titleInput = document.getElementById('id_title');
+                const descInput = document.getElementById('id_description');
+                const priorityInput = document.getElementById('id_priority');
+                const dueDateInput = document.getElementById('id_due_date');
+
+                // Check required title first
+                const titleValue = titleInput ? titleInput.value.trim() : '';
+                if (!titleValue) {
+                    this.showToast('Please enter a title for your list.', 'error');
+                    if (titleInput) titleInput.focus();
+                    return;
+                }
+
+                // Validate fields using existing validation rules
+                let allValid = true;
+                [titleInput, descInput, priorityInput, dueDateInput].forEach(field => {
+                    if (!field) return;
+                    const valid = this.validateField(field);
+                    if (!valid) allValid = false;
+                });
+
+                if (!allValid) {
+                    this.showToast('Please fix the errors above before submitting.', 'error');
+                    return;
+                }
+
+                // Show loading state
+                this.showLoading(true);
+
+                try {
+                    // Simulate processing delay for better UX
+                    await this.sleep(800);
+
+                    // Clear auto-saved data
+                    localStorage.removeItem('createListForm');
+
+                    // Submit the form
+                    this.form.submit();
+                } catch (error) {
+                    this.showLoading(false);
+                    this.showToast('Something went wrong. Please try again.', 'error');
+                }
+            }
+
+            showLoading(show) {
+                if (show) {
+                    this.loadingOverlay.classList.add('active');
+                    this.submitBtn.disabled = true;
+                    this.submitText.textContent = 'Creating...';
+                } else {
+                    this.loadingOverlay.classList.remove('active');
+                    this.submitBtn.disabled = false;
+                    this.submitText.textContent = 'Create My List';
+                }
+            }
+
+            showToast(message, type = 'info', duration = 5000) {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = 'toast transform translate-x-full opacity-0 transition-all duration-300';
+                
+                const colors = {
+                    success: 'bg-green-500 border-green-400',
+                    error: 'bg-red-500 border-red-400',
+                    warning: 'bg-yellow-500 border-yellow-400',
+                    info: 'bg-blue-500 border-blue-400'
+                };
+
+                const icons = {
+                    success: '✓',
+                    error: '✕',
+                    warning: '⚠',
+                    info: 'ℹ'
+                };
+
+                toast.innerHTML = `
+                    <div class="glass-effect ${colors[type]} border rounded-xl p-4 shadow-lg">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-shrink-0 text-white font-bold text-lg">
+                                ${icons[type]}
+                            </div>
+                            <div class="text-white font-medium">
+                                ${message}
+                            </div>
+                            <button onclick="this.closest('.toast').remove()" class="ml-auto text-white hover:text-gray-200">
+                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(toast);
+
+                // Animate in
+                requestAnimationFrame(() => {
+                    toast.classList.remove('translate-x-full', 'opacity-0');
+                });
+
+                // Auto remove
+                setTimeout(() => {
+                    toast.classList.add('translate-x-full', 'opacity-0');
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            toast.parentNode.removeChild(toast);
+                        }
+                    }, 300);
+                }, duration);
+            }
+
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const manager = new CreateListManager();
+
+            // Add page transition effects
+            document.body.style.opacity = '0';
+            setTimeout(() => {
+                document.body.style.transition = 'opacity 0.5s ease';
+                document.body.style.opacity = '1';
+            }, 100);
+
+            // Show welcome message
+            setTimeout(() => {
+                manager.showToast('💡 Pro tip: Use Ctrl+Enter to quickly submit your form!', 'info', 6000);
+            }, 2000);
+
+            console.log('✨ Create List Manager initialized successfully!');
+        });
+
+        // Handle page visibility changes (for auto-save)
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                // Save form data when user switches away
+                const formData = {};
+                document.querySelectorAll('#createListForm input, #createListForm textarea, #createListForm select').forEach(field => {
+                    if (field.value.trim()) {
+                        formData[field.name] = field.value;
+                    }
+                });
+                if (Object.keys(formData).length > 0) {
+                    localStorage.setItem('createListForm', JSON.stringify(formData));
+                }
+            }
+        });
+
+        // Add smooth scrolling for better UX
+        document.documentElement.style.scrollBehavior = 'smooth';
+    </script>
+</body>
+</html>
+{% endblock %}

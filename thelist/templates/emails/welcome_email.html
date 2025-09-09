@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to {{ app_name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+        }
+        .content {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+        }
+        .welcome-text {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .features {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .feature-item {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #667eea;
+            background: #f8f9fa;
+        }
+        .cta-button {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Welcome to {{ app_name }}!</h1>
+        <p>Your personal note-taking journey starts here</p>
+    </div>
+    
+    <div class="content">
+        <div class="welcome-text">
+            <p>Hi {{ user.first_name|default:user.username }},</p>
+            <p>Welcome to {{ app_name }}! We're thrilled to have you join our community of organized note-takers.</p>
+        </div>
+        
+        <div class="features">
+            <h3>Here's what you can do with {{ app_name }}:</h3>
+            <div class="feature-item">
+                <strong>📝 Create & Organize Notes</strong><br>
+                Write, edit, and organize your thoughts seamlessly
+            </div>
+            <div class="feature-item">
+                <strong>🔍 Quick Search</strong><br>
+                Find any note instantly with our powerful search feature
+            </div>
+            <div class="feature-item">
+                <strong>📱 Access Anywhere</strong><br>
+                Your notes are always available, on any device
+            </div>
+            <div class="feature-item">
+                <strong>🔒 Secure & Private</strong><br>
+                Your notes are private and secure, just for you
+            </div>
+        </div>
+        
+        <p>Ready to start? Click the button below to begin creating your first note:</p>
+        <a href="#" class="cta-button">Start Taking Notes</a>
+        
+        <p>If you have any questions or need help getting started, don't hesitate to reach out to our support team.</p>
+        
+        <p>Happy note-taking!<br>
+        The {{ app_name }} Team</p>
+    </div>
+    
+    <div class="footer">
+        <p>© 2024 {{ app_name }}. All rights reserved.</p>
+        <p>You received this email because you signed up for {{ app_name }}.</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,1311 @@
+{% extends 'whattodo/base.html' %}
+
+{% block title %}My Lists{% endblock %}
+
+{% block content %}
+<head>
+        <!-- ADDED: Critical CSS to prevent white flash -->
+    <style>
+        /* Critical CSS - Loaded first to prevent flash */
+        html, body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%) !important;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        /* Hide content until fully loaded */
+        .page-content {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        
+        .page-loaded .page-content {
+            opacity: 1;
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'slide-down': 'slideDown 0.4s ease-out',
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'bounce-subtle': 'bounceSubtle 0.5s ease-out',
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                        'scale-in': 'scaleIn 0.2s ease-out',
+                        'shimmer': 'shimmer 2s infinite',
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes bounceSubtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(20, 184, 166, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(20, 184, 166, 0.6); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: calc(200px + 100%) 0; }
+        }
+        @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+        animation: fadeIn 0.5s ease-out forwards;
+        }
+        @keyframes bounceGentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .glass-effect {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        body {
+        font-family: 'Inter', sans-serif;
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%);
+            background-size: 400% 400%;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(20, 184, 166, 0.4);
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #10b981, #059669);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        .status-completed {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            color: #15803d;
+        }
+
+        .search-input:focus {
+            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+        }
+
+        .floating-action {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 50;
+            animation: pulse-glow 3s infinite;
+        }
+
+        @media (max-width: 768px) {
+            .floating-action {
+                bottom: 1rem;
+                right: 1rem;
+            }
+        }
+
+        .toast {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            min-width: 300px;
+            animation: slide-down 0.4s ease-out;
+        }
+
+        @media (max-width: 640px) {
+            .toast {
+                left: 1rem;
+                right: 1rem;
+                top: 1rem;
+                min-width: auto;
+            }
+        }
+
+        .loading-skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        /* Enhanced CSS for JavaScript functionality */
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Ensure buttons don't change size when showing loading state */
+        button {
+            min-width: fit-content;
+        }
+
+        /* Smooth transitions for status changes */
+        .glass-effect span, .glass-card span {
+            transition: all 0.3s ease;
+        }
+
+        /* Loading states */
+        .loading {
+            pointer-events: none;
+            opacity: 0.6;
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Task completion animation */
+        .task-complete {
+            animation: taskCompleteFlash 0.5s ease-out;
+        }
+
+        @keyframes taskCompleteFlash {
+            0% { background: rgba(34, 197, 94, 0.1); }
+            50% { background: rgba(34, 197, 94, 0.3); }
+            100% { background: rgba(34, 197, 94, 0.1); }
+        }
+
+        /* Enhanced status badges */
+        .status-completed {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            color: #15803d;
+            border: 1px solid #22c55e;
+        }
+
+        .status-active {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1d4ed8;
+            border: 1px solid #3b82f6;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .notification-toast, .toast {
+                left: 1rem;
+                right: 1rem;
+                top: 1rem;
+                max-width: calc(100vw - 2rem);
+            }
+        }
+
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        select option {
+            background-color: #1e293b;
+            color: white;
+        }
+
+        .priority-badge {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-badge {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Modal specific styles */
+        .modal-backdrop {
+            backdrop-filter: blur(8px);
+        }
+         .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(8px);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal-content {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 24px;
+        padding: 32px;
+        max-width: 420px;
+        width: 90%;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        transform: scale(0.9) translateY(20px);
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+
+    .modal-overlay.active .modal-content {
+        transform: scale(1) translateY(0);
+    }
+
+    .modal-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 24px;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .modal-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1f2937;
+        text-align: center;
+        margin-bottom: 12px;
+    }
+
+    .modal-text {
+        color: #6b7280;
+        text-align: center;
+        margin-bottom: 32px;
+        line-height: 1.6;
+        font-size: 16px;
+    }
+
+    .modal-buttons {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+    }
+
+    .modal-btn {
+        padding: 12px 28px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+        min-width: 120px;
+        position: relative;
+        overflow: hidden;
+    }
+    .loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.5s ease-out;
+    }
+    .loading-screen.fade-out {
+    opacity: 0;
+    pointer-events: none;
+    }
+
+    .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(20, 184, 166, 0.3);
+    border-top: 3px solid #14b8a6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+    }
+
+    .modal-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.5s;
+    }
+
+    .modal-btn:hover::before {
+        left: 100%;
+    }
+
+    .btn-cancel {
+        background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        color: white;
+        box-shadow: 0 4px 14px rgba(107, 114, 128, 0.3);
+    }
+
+    .btn-cancel:hover {
+        background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(107, 114, 128, 0.4);
+    }
+
+    .btn-delete-Note{
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-delete-Note:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    </style>
+</head>
+
+<body class="min-h-screen gradient-bg font-sans overflow-x-hidden">
+       <!-- Loading Screen -->
+        <div class="loading-screen" id="loadingScreen">
+            <div class="loading-spinner"></div>
+        </div>
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 py-6 lg:py-8 max-w-7xl">
+        <!-- Header Section -->
+        <div class="glass-effect p-6 lg:p-8 rounded-3xl shadow-2xl mb-8 animate-slide-down">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div class="space-y-3">
+                    <h1 class="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-white to-primary-100 bg-clip-text text-transparent">
+                        My Notes
+                    </h1>
+                    <p class="text-slate-200 text-lg lg:text-xl">View edit an create notes.</p>
+                    <div class="flex items-center gap-6 text-sm text-slate-300">
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 bg-primary-400 rounded-full animate-pulse"></div>
+                            <span>{{ total_lists }} Total</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 bg-green-400 rounded-full"></div>
+                            <span>{{ completed_lists }} Completed</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Desktop Create Button -->
+                <div class="hidden lg:block">
+                    <a href="{% url 'whattodo:create_list' %}" class="btn-primary inline-flex items-center gap-3 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 8v8M8 12h8"/>
+                        </svg>
+                        Create New Note
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter Section -->
+        <div class="glass-effect p-6 lg:p-8 rounded-3xl shadow-2xl mb-8 animate-slide-up">
+            <form method="GET" class="space-y-4 lg:space-y-0 lg:flex lg:gap-4" id="filterForm">
+                <!-- Search Input -->
+                <div class="flex-1">
+                    <div class="relative">
+                        <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.35-4.35"/>
+                        </svg>
+                        <input type="text" name="search" value="{{ search_query }}" 
+                               placeholder="Search your notes..." 
+                               class="search-input w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 backdrop-blur-sm">
+                    </div>
+                </div>
+                
+                <!-- Filter Controls -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4 items-center">
+                    <!-- Filter -->
+                    <div>
+                        <label class="sr-only" for="filter">Filter Notes</label>
+                        <div class="relative">
+                            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h18M6 12h12M10 19h4" />
+                            </svg>
+                            <select id="filter" name="filter" aria-label="Filter lists" class="pl-10 w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent backdrop-blur-sm">
+                                <option value="all" {% if filter_by == 'all' or not filter_by %}selected{% endif %}>All Notes</option>
+                                <option value="active" {% if filter_by == 'active' %}selected{% endif %}>Active</option>
+                                <option value="completed" {% if filter_by == 'completed' %}selected{% endif %}>Completed</option>
+                            </select>
+                        </div>
+                        <p class="mt-1 text-xs text-slate-400">Filter by status</p>
+                    </div>
+
+                    <!-- Sort -->
+                    <div>
+                        <label class="sr-only" for="sort">Sort lists</label>
+                        <div class="relative">
+                            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h4M3 6h8M3 14h12M3 18h16" />
+                            </svg>
+                            <select id="sort" name="sort" aria-label="Sort lists"
+                                    class="pl-10 w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent backdrop-blur-sm appearance-none">
+                                <option value="-created_at" {% if sort_by == '-created_at' or not sort_by %}selected{% endif %}>Newest First</option>
+                                <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Oldest First</option>
+                                <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Title A–Z</option>
+                            </select>
+                            <div class="pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2">
+                                <svg class="w-4 h-4 text-slate-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M6 8l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="mt-1 text-xs text-slate-400">Choose how notes are ordered</p>
+                    </div>
+                    
+                    <button type="submit" class="col-span-2 lg:col-span-1 btn-primary px-6 py-4 text-white rounded-xl font-semibold transition-all duration-300 mt-4 lg:mt-0">
+                        Apply Filters
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Lists Grid -->
+        {% if page_obj %}
+        <div class="animate-fade-in">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 lg:gap-8 mb-8">
+                {% for todo_list in page_obj %}
+                    <div class="glass-card rounded-2xl overflow-hidden group animate-scale-in" 
+                         data-list-id="{{ todo_list.pk }}">
+                        
+                        <!-- List Header -->
+                        <div class="p-6 space-y-4">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="text-xl font-bold text-white mb-2 line-clamp-2 group-hover:text-primary-100 transition-colors">
+                                        {{ todo_list.title }}
+                                    </h3>
+                                    {% if todo_list.description %}
+                                        <p class="text-slate-300 text-sm line-clamp-2 leading-relaxed">{{ todo_list.description }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Status and Date -->
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="status-badge {% if todo_list.is_completed %}status-completed{% else %}status-active{% endif %} px-3 py-1 rounded-full font-semibold uppercase">
+                                    {% if todo_list.is_completed %}✓ Completed{% else %}⚡ Active{% endif %}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="px-6 pb-6">
+                            <div class="grid grid-cols-4 gap-2">
+                                <a href="{% url 'whattodo:list_detail' todo_list.pk %}" 
+                                   class="col-span-2 text-center px-4 py-3 bg-primary-500/20 text-primary-100 rounded-lg hover:bg-primary-500/30 transition-all duration-200 text-sm font-medium border border-primary-400/30">
+                                    View
+                                </a>
+                                <button onclick="toggleListCompletion('{{ todo_list.pk }}')" 
+                                        class="px-3 py-3 bg-green-500/20 text-green-300 rounded-lg hover:bg-green-500/30 transition-all duration-200 border border-green-400/30">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="20,6 9,17 4,12"/>
+                                    </svg>
+                                </button>
+                                <button onclick="openDeleteModal(this)" data-list-id="{{ todo_list.pk }}" data-list-title="{{ todo_list.title|escape }}" 
+                                        class="px-3 py-3 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition-all duration-200 border border-red-400/30"
+                                        aria-label="Delete note">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="3,6 5,6 21,6"/>
+                                        <path d="m19,6v14a2,2 0 0,1-2,2H7a2,2 0 0,1-2-2V6m3,0V4a2,2 0 0,1,2-2h4a2,2 0 0,1,2,2v2"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <a href="{% url 'whattodo:list_detail' todo_list.pk %}" 
+                               class="mt-2 block text-center px-4 py-3 bg-slate-500/20 text-slate-300 rounded-lg hover:bg-slate-500/30 transition-all duration-200 text-sm font-medium border border-slate-400/30">
+                                Edit Note
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+                <div class="flex justify-center">
+                    <nav class="glass-effect p-4 rounded-2xl">
+                        <div class="flex items-center gap-2 flex-wrap justify-center">
+                            {% if page_obj.has_previous %}
+                                <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if filter_by %}&filter={{ filter_by }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                                   class="px-4 py-2 text-slate-300 hover:text-primary-200 hover:bg-primary-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-primary-400/30">
+                                    First
+                                </a>
+                                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if filter_by %}&filter={{ filter_by }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                                   class="px-4 py-2 text-slate-300 hover:text-primary-200 hover:bg-primary-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-primary-400/30">
+                                    Previous
+                                </a>
+                            {% endif %}
+
+                            <span class="px-6 py-2 bg-primary-600 text-white rounded-lg font-semibold border border-primary-500">
+                                {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                            </span>
+
+                            {% if page_obj.has_next %}
+                                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if filter_by %}&filter={{ filter_by }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                                   class="px-4 py-2 text-slate-300 hover:text-primary-200 hover:bg-primary-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-primary-400/30">
+                                    Next
+                                </a>
+                                <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if filter_by %}&filter={{ filter_by }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" 
+                                   class="px-4 py-2 text-slate-300 hover:text-primary-200 hover:bg-primary-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-primary-400/30">
+                                    Last
+                                </a>
+                            {% endif %}
+                        </div>
+                    </nav>
+                </div>
+            {% endif %}
+        </div>
+        {% else %}
+            <!-- Enhanced Empty State -->
+            <div class="glass-effect rounded-3xl p-12 text-center animate-fade-in">
+                <div class="max-w-md mx-auto">
+                    <div class="mb-8 relative">
+                        <div class="mx-auto w-32 h-32 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center animate-pulse">
+                            <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-2xl font-bold text-white mb-4">
+                        {% if search_query %}No Notes found{% else %}Ready to get organized?{% endif %}
+                    </h3>
+                    
+                    <p class="text-slate-300 mb-8 leading-relaxed">
+                        {% if search_query %}
+                            Try adjusting your search terms or filters to find what you're looking for.
+                        {% else %}
+                            Create your first Note and start turning your ideas into accomplishments.
+                        {% endif %}
+                    </p>
+                    
+                    <a href="{% url 'whattodo:create_list' %}" class="btn-primary inline-flex items-center gap-3 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 8v8M8 12h8"/>
+                        </svg>
+                        {% if search_query %}Create New Note{% else %}Create Your First Note{% endif %}
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Mobile Floating Action Button -->
+    <div class="lg:hidden floating-action">
+        <a href="{% url 'whattodo:create_list' %}" class="btn-primary flex items-center justify-center w-14 h-14 rounded-full text-white shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 8v8M8 12h8"/>
+            </svg>
+        </a>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300 modal-backdrop">
+        <div class="bg-white max-w-md w-full mx-auto rounded-2xl p-6 transform scale-95 transition-all duration-300" id="deleteModalContent">
+            <!-- Modal Header -->
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center border border-red-400/30">
+                    <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900">Delete Note</h3>
+                    <p class="text-gray-500 text-sm">This action cannot be undone</p>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="mb-6">
+                <p class="text-gray-700 leading-relaxed">
+                    Are you sure you want to delete <strong class="text-gray-900" id="deleteModalTitle">"Note Title"</strong>?
+                </p>
+                <p class="text-gray-900 text-sm mt-2">
+                    This will permanently delete the note and all its items.
+                </p>
+            </div>
+
+            <!-- Modal Actions -->
+            <div class="modal-buttons">
+                <button type="button" onclick="closeDeleteModal()" 
+                        class="modal-btn btn-cancel">
+                    Cancel
+                </button>
+                <button type="button" onclick="confirmDelete()" id="confirmDeleteBtn"
+                        class="modal-btn btn-delete-Note flex items-center justify-center gap-2">
+                    <span class="delete-btn-text">Delete Note</span>
+                    <div class="delete-btn-loading hidden flex items-center justify-center gap-2">
+                        <div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                        <span>Deleting...</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSRF Token -->
+    {% csrf_token %}
+
+    <!-- Complete JavaScript Implementation -->
+    <script>
+    // Modal control functions
+    let currentDeleteData = null;
+
+    function openDeleteModal(button) {
+        const listId = button.getAttribute('data-list-id');
+        const listTitle = button.getAttribute('data-list-title');
+        
+        currentDeleteData = {
+            listId: listId,
+            listTitle: listTitle,
+            button: button,
+            listCard: button.closest('.glass-card') || button.closest('[data-list-id]')
+        };
+
+        // Update modal content
+        const modal = document.getElementById('deleteModal');
+        const titleElement = document.getElementById('deleteModalTitle');
+        if (titleElement) {
+            titleElement.textContent = `"${listTitle}"`;
+        }
+
+        // Show modal with animation
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        const modalContent = document.getElementById('deleteModalContent');
+        modalContent.classList.remove('scale-95');
+        modalContent.classList.add('scale-100');
+
+        // Focus the cancel button for accessibility
+        setTimeout(() => {
+            const cancelBtn = modal.querySelector('button[onclick="closeDeleteModal()"]');
+            if (cancelBtn) cancelBtn.focus();
+        }, 150);
+
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDeleteModal() {
+        const modal = document.getElementById('deleteModal');
+        const modalContent = document.getElementById('deleteModalContent');
+        
+        modalContent.classList.remove('scale-100');
+        modalContent.classList.add('scale-95');
+        
+        setTimeout(() => {
+            modal.classList.add('opacity-0', 'pointer-events-none');
+        }, 150);
+
+        // Restore body scroll
+        document.body.style.overflow = '';
+        
+        // Reset loading state
+        resetDeleteButton();
+        currentDeleteData = null;
+    }
+
+    function confirmDelete() {
+        if (!currentDeleteData) return;
+
+        const { listId, listTitle, button, listCard } = currentDeleteData;
+        
+        // Show loading state
+        setDeleteButtonLoading(true);
+
+        // Make AJAX request to Django backend
+        fetch(`/delete-list/${listId}/`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+            },
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Close modal first
+                closeDeleteModal();
+                
+                // Animate card removal
+                listCard.style.transition = 'all 0.3s ease-out';
+                listCard.style.transform = 'scale(0.8)';
+                listCard.style.opacity = '0';
+                
+                setTimeout(() => {
+                    listCard.remove();
+                    checkEmptyState();
+                }, 300);
+                
+                if (typeof toastManager !== 'undefined') {
+                    toastManager.show(data.message || `Note "${listTitle}" deleted successfully.`, 'success');
+                } else {
+                    showNotification(data.message || `Note "${listTitle}" deleted successfully.`);
+                }
+            } else {
+                throw new Error(data.message || 'Failed to delete note');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (typeof toastManager !== 'undefined') {
+                toastManager.show('Error deleting note. Please try again.', 'error');
+            } else {
+                showNotification('Error deleting note. Please try again.', 'error');
+            }
+            setDeleteButtonLoading(false);
+        });
+    }
+
+    function setDeleteButtonLoading(loading) {
+        const deleteBtn = document.getElementById('confirmDeleteBtn');
+        const textEl = deleteBtn.querySelector('.delete-btn-text');
+        const loadingEl = deleteBtn.querySelector('.delete-btn-loading');
+        
+        if (loading) {
+            textEl.classList.add('hidden');
+            loadingEl.classList.remove('hidden');
+            deleteBtn.disabled = true;
+        } else {
+            textEl.classList.remove('hidden');
+            loadingEl.classList.add('hidden');
+            deleteBtn.disabled = false;
+        }
+    }
+
+    function resetDeleteButton() {
+        setDeleteButtonLoading(false);
+    }
+
+    // Function to toggle list completion status
+    function toggleListCompletion(listId) {
+        // Show loading state
+        const button = event.target.closest('button');
+        const listCard = button.closest('.glass-card');
+        const originalContent = button.innerHTML;
+        button.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full"></div>';
+        button.disabled = true;
+
+        // Make AJAX request to Django backend
+        fetch(`/toggle-list-completion/${listId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+            },
+            body: JSON.stringify({
+                'list_id': listId
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Update the status badge using the more specific class
+                const statusBadge = listCard.querySelector('.status-badge');
+                if (statusBadge) {
+                    if (data.completed) {
+                        statusBadge.className = 'status-badge status-completed px-3 py-1 rounded-full font-semibold uppercase text-xs';
+                        statusBadge.textContent = '✓ Completed';
+                    } else {
+                        statusBadge.className = 'status-badge status-active px-3 py-1 rounded-full font-semibold uppercase text-xs';
+                        statusBadge.textContent = '⚡ Active';
+                    }
+                }
+                
+                if (typeof toastManager !== 'undefined') {
+                    toastManager.show(data.message || `Note ${data.completed ? 'completed' : 'marked as in progress'}!`, 'success');
+                } else {
+                    showNotification(data.message || `Note ${data.completed ? 'completed' : 'marked as in progress'}!`);
+                }
+            } else {
+                throw new Error(data.message || 'Failed to update note');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (typeof toastManager !== 'undefined') {
+                toastManager.show('Error updating note. Please try again.', 'error');
+            } else {
+                showNotification('Error updating note. Please try again.', 'error');
+            }
+        })
+        .finally(() => {
+            // Restore button
+            button.innerHTML = originalContent;
+            button.disabled = false;
+        });
+    }
+
+    // Utility function to get CSRF token
+    function getCsrfToken() {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfToken) {
+            return csrfToken.value;
+        }
+        
+        // Fallback: get from cookie
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'csrftoken') {
+                return value;
+            }
+        }
+        
+        console.warn('CSRF token not found');
+        return '';
+    }
+
+    // Basic notification function (fallback for when ToastManager is not available)
+    function showNotification(message, type = 'success') {
+        // Remove existing notifications
+        const existingNotifications = document.querySelectorAll('.notification-toast');
+        existingNotifications.forEach(notification => notification.remove());
+
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification-toast fixed top-4 right-4 z-50 px-4 py-3 rounded-lg text-white text-sm font-medium transition-all duration-300 transform translate-x-full`;
+        
+        if (type === 'success') {
+            notification.className += ' bg-green-500/90 border border-green-400/30';
+        } else if (type === 'error') {
+            notification.className += ' bg-red-500/90 border border-red-400/30';
+        } else {
+            notification.className += ' bg-blue-500/90 border border-blue-400/30';
+        }
+        
+        notification.style.backdropFilter = 'blur(10px)';
+        notification.innerHTML = `
+            <div class="flex items-center gap-2">
+                <span>${message}</span>
+                <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white/70 hover:text-white">×</button>
+            </div>
+        `;
+
+        document.body.appendChild(notification);
+
+        // Animate in
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 10);
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (document.contains(notification)) {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    if (document.contains(notification)) {
+                        notification.remove();
+                    }
+                }, 300);
+            }
+        }, 5000);
+    }
+
+    // Enhanced functionality from the Django template
+    class TodoListManager {
+        constructor() {
+            this.init();
+        }
+
+        init() {
+            this.setupEventListeners();
+            this.setupAutoSearch();
+            this.animateCards();
+        }
+
+        setupEventListeners() {
+            // Form submission with loading state
+            const form = document.getElementById('filterForm');
+            if (form) {
+                form.addEventListener('submit', this.handleFormSubmit.bind(this));
+            }
+        }
+
+        handleFormSubmit(e) {
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.classList.add('loading');
+                submitBtn.innerHTML = 'Filtering...';
+            }
+        }
+
+        performSearch(query) {
+            // Add subtle loading indicator
+            this.showSearchLoading(true);
+            
+            // Simulate search delay for UX
+            setTimeout(() => {
+                if (query.length >= 2 || query.length === 0) {
+                    const form = document.getElementById('filterForm');
+                    if (form) form.submit();
+                }
+                this.showSearchLoading(false);
+            }, 150);
+        }
+
+        showSearchLoading(show) {
+            const searchInput = document.querySelector('input[name="search"]');
+            if (searchInput) {
+                if (show) {
+                    searchInput.style.background = 'linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%)';
+                    searchInput.style.backgroundSize = '200% 100%';
+                    searchInput.style.animation = 'shimmer 1s infinite';
+                } else {
+                    searchInput.style.background = 'rgba(255,255,255,0.1)';
+                    searchInput.style.animation = 'none';
+                }
+            }
+        }
+
+        animateCards() {
+            const cards = document.querySelectorAll('[data-list-id]');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 100}ms`;
+            });
+        }
+    }
+
+    // Toast notification system
+    class ToastManager {
+        constructor() {
+            this.container = document.getElementById('toast-container');
+            if (!this.container) {
+                this.container = document.createElement('div');
+                this.container.id = 'toast-container';
+                this.container.className = 'fixed top-4 right-4 z-50 space-y-2';
+                document.body.appendChild(this.container);
+            }
+        }
+
+        show(message, type = 'info', duration = 5000) {
+            const toast = this.createToast(message, type);
+            this.container.appendChild(toast);
+
+            // Animate in
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-x-full', 'opacity-0');
+            });
+
+            // Auto remove
+            setTimeout(() => {
+                this.remove(toast);
+            }, duration);
+
+            return toast;
+        }
+
+        createToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast transform translate-x-full opacity-0 transition-all duration-300 max-w-sm`;
+            
+            const colors = {
+                success: 'bg-green-500 border-green-400',
+                error: 'bg-red-500 border-red-400',
+                warning: 'bg-yellow-500 border-yellow-400',
+                info: 'bg-blue-500 border-blue-400'
+            };
+
+            const icons = {
+                success: '✓',
+                error: '✕',
+                warning: '⚠',
+                info: 'ℹ'
+            };
+
+            toast.innerHTML = `
+                <div class="glass-effect ${colors[type]} border rounded-xl p-4 shadow-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="flex-shrink-0 text-white font-bold text-lg">
+                            ${icons[type]}
+                        </div>
+                        <div class="text-white font-medium">
+                            ${message}
+                        </div>
+                        <button onclick="this.closest('.toast').remove()" class="ml-auto text-white hover:text-gray-200">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            return toast;
+        }
+
+        remove(toast) {
+            toast.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }
+    }
+
+    function checkEmptyState() {
+        const remainingCards = document.querySelectorAll('[data-list-id]');
+        if (remainingCards.length === 0) {
+            // Show empty state if no cards remain
+            const container = document.querySelector('.grid');
+            if (container) {
+                container.innerHTML = `
+                    <div class="col-span-full glass-effect rounded-3xl p-12 text-center animate-fade-in">
+                        <div class="max-w-md mx-auto">
+                            <div class="mb-8 relative">
+                                <div class="mx-auto w-32 h-32 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center animate-pulse">
+                                    <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <h3 class="text-2xl font-bold text-white mb-4">All done!</h3>
+                            <p class="text-slate-300 mb-8 leading-relaxed">Ready to create something new?</p>
+                            <a href="{% url 'whattodo:create_list' %}" class="btn-primary inline-flex items-center gap-3 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M12 8v8M8 12h8"/>
+                                </svg>
+                                Create New Note
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    // Keyboard shortcuts
+    function setupKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Close modal with Escape key
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('deleteModal');
+                if (modal && !modal.classList.contains('pointer-events-none')) {
+                    e.preventDefault();
+                    closeDeleteModal();
+                    return;
+                }
+            }
+            
+            // Ctrl/Cmd + K to focus search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                const searchInput = document.querySelector('input[name="search"]');
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                }
+            }
+            
+            // Ctrl/Cmd + N to create new list
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                const createLink = document.querySelector('a[href*="create_list"]');
+                if (createLink) {
+                    window.location.href = createLink.href;
+                }
+            }
+        });
+    }
+
+    // Initialize everything
+    let todoListManager, toastManager;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        todoListManager = new TodoListManager();
+        toastManager = new ToastManager();
+        setupKeyboardShortcuts();
+        setupModalClickOutside();
+
+        // Add loading states to edit links
+        const editLinks = document.querySelectorAll('a[href*="list_detail"]');
+        editLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                const originalText = this.textContent;
+                this.innerHTML = `
+                    <div class="flex items-center justify-center gap-2">
+                        <div class="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full"></div>
+                        <span>Loading...</span>
+                    </div>
+                `;
+            });
+        });
+
+        // Add smooth scroll behavior
+        document.documentElement.style.scrollBehavior = 'smooth';
+
+        console.log('✨ Note Manager initialized successfully!');
+    });
+
+    // Setup click outside modal to close
+    function setupModalClickOutside() {
+        const modal = document.getElementById('deleteModal');
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeDeleteModal();
+                }
+            });
+        }
+    }
+
+            // Hide loading screen and show content when page is fully loaded
+            window.addEventListener('load', function() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            const body = document.body;
+            
+            // Add fade out class to loading screen
+            loadingScreen.classList.add('fade-out');
+            
+            // Add loaded class to body to show content
+            body.classList.add('page-loaded');
+            
+            // Remove loading screen from DOM after fade out completes
+            setTimeout(() => {
+                loadingScreen.remove();
+            }, 500);
+        });
+
+        // Fallback: Hide loading screen after 2 seconds even if load event doesn't fire
+        setTimeout(() => {
+            const loadingScreen = document.getElementById('loadingScreen');
+            const body = document.body;
+            
+            if (loadingScreen && !body.classList.contains('page-loaded')) {
+                loadingScreen.classList.add('fade-out');
+                body.classList.add('page-loaded');
+                
+                setTimeout(() => {
+                    if (loadingScreen) loadingScreen.remove();
+                }, 500);
+            }
+        }, 2000);
+    </script>
+</body>
+{% endblock %}

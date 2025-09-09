@@ -1,0 +1,834 @@
+{% extends 'whattodo/base.html' %}
+{% load static %}
+
+{% block content %}
+<head>
+    <style>
+        /* Critical CSS - Loaded first to prevent flash */
+        html, body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%) !important;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        /* Hide content until fully loaded */
+        .page-content {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        
+        .page-loaded .page-content {
+            opacity: 1;
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'slide-down': 'slideDown 0.4s ease-out',
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'bounce-subtle': 'bounceSubtle 0.5s ease-out',
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                        'scale-in': 'scaleIn 0.2s ease-out',
+                        'shimmer': 'shimmer 2s infinite',
+                        'spin': 'spin 1s linear infinite',
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bounceSubtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(20, 184, 166, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(20, 184, 166, 0.6); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: calc(200px + 100%) 0; }
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%);
+            background-size: 400% 400%;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(20, 184, 166, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Editable content styles */
+        .editable {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin: -8px -12px;
+            position: relative;
+        }
+
+        .editable:hover {
+            background: rgba(255, 255, 255, 0.05);
+            cursor: text;
+        }
+
+        .editable.editing {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(20, 184, 166, 0.5);
+            outline: none;
+        }
+
+        .edit-indicator {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: rgba(20, 184, 166, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .editable:hover .edit-indicator {
+            opacity: 1;
+        }
+
+        .editable.editing .edit-indicator {
+            opacity: 1;
+            background: rgba(34, 197, 94, 0.8);
+        }
+
+        /* Text areas and inputs */
+        .form-textarea, .form-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .form-textarea:focus, .form-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #14b8a6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+        }
+
+        .form-textarea::placeholder, .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Auto-save indicator */
+        .save-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .save-status.saving {
+            background: rgba(59, 246, 193, 0.9);
+            color: white;
+        }
+
+        .save-status.saved {
+            background: rgba(34, 197, 94, 0.9);
+            color: white;
+        }
+
+        .save-status.error {
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+            
+            .save-status {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                text-align: center;
+            }
+            
+            .glass-effect {
+                padding: 16px;
+            }
+        }
+
+        /* Word count and character limit */
+        .text-counter {
+            position: absolute;
+            bottom: 8px;
+            right: 12px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Priority badge styles */
+        .priority-high { 
+            background: linear-gradient(135deg, #ef4444, #dc2626); 
+            color: white; 
+        }
+        .priority-medium { 
+            background: linear-gradient(135deg, #f59e0b, #d97706); 
+            color: white; 
+        }
+        .priority-low { 
+            background: linear-gradient(135deg, #10b981, #059669); 
+            color: white; 
+        }
+
+        /* Status badge styles */
+        .status-completed {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            color: #15803d;
+            border: 1px solid #22c55e;
+        }
+
+        .status-active {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1d4ed8;
+            border: 1px solid #3b82f6;
+        }
+
+        /* Smooth transitions for all interactive elements */
+        * {
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .loading-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(20, 184, 166, 0.3);
+            border-top: 3px solid #14b8a6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen gradient-bg font-sans overflow-x-hidden">
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <!-- Page Content - starts hidden -->
+    <div class="page-content">
+        <!-- Auto-save status indicator -->
+        <div id="saveStatus" class="save-status" style="display: none;"></div>
+
+        <!-- Main Container -->
+        <div class="container mx-auto px-4 py-6 lg:py-8 max-w-6xl relative z-10">
+            
+            <!-- Header Section -->
+            <div class="glass-effect p-6 lg:p-8 rounded-3xl shadow-2xl mb-8 animate-slide-down">
+                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+                    <!-- Title Section -->
+                    <div class="flex-1">
+                        <div class="relative">
+                            <h1 class="editable text-3xl lg:text-5xl font-extrabold text-white leading-tight break-words min-h-[3rem] lg:min-h-[4rem]" 
+                                contenteditable="true" 
+                                data-field="title"
+                                data-original="{{ todo_list.title }}"
+                                spellcheck="false">{{ todo_list.title }}</h1>
+                            <span class="edit-indicator">Click to edit</span>
+                        </div>
+                        <p class="text-slate-300 mt-2 text-sm lg:text-base">
+                            Created by {{ todo_list.user.username|default:"Unknown" }} • 
+                            {{ todo_list.created_at|date:"M d, Y" }}
+                            {% if todo_list.updated_at != todo_list.created_at %}
+                                • Last updated {{ todo_list.updated_at|timesince }} ago
+                            {% endif %}
+                        </p>
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description Section -->
+            <div class="glass-effect p-6 lg:p-8 rounded-3xl shadow-2xl mb-8 animate-fade-in">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl lg:text-2xl font-bold text-white">Note</h2>
+                    <div class="flex gap-2">
+                        <button onclick="formatText('bold')" class="btn-secondary px-3 py-2 text-white rounded-lg text-sm">
+                            <strong>B</strong>
+                        </button>
+                        <button onclick="formatText('italic')" class="btn-secondary px-3 py-2 text-white rounded-lg text-sm">
+                            <em>I</em>
+                        </button>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div class="editable text-slate-200 leading-relaxed min-h-[200px] lg:min-h-[300px] text-sm lg:text-base" 
+                         contenteditable="true" 
+                         data-field="description"
+                         data-original="{{ todo_list.description|default:'' }}"
+                         data-placeholder="Start typing your notes here... You can add ideas, tasks, links, or anything else you need to remember."
+                         spellcheck="true">{% if todo_list.description %}{{ todo_list.description|linebreaksbr }}{% else %}<span class="text-slate-400">Start typing your notes here... You can add ideas, tasks, links, or anything else you need to remember.</span>{% endif %}</div>
+                    <span class="edit-indicator">Click to edit</span>
+                    <div class="text-counter" id="charCounter">0 characters</div>
+                </div>
+            </div>
+            
+            <!-- Bottom Actions -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <a href="{% url 'whattodo:my_lists' %}" 
+                   class="btn-secondary px-6 py-3 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl flex items-center gap-2 order-2 sm:order-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m12 19-7-7 7-7"/>
+                        <path d="M19 12H5"/>
+                    </svg>
+                    Back to Notes
+                </a>
+                
+                <div class="flex gap-3 order-1 sm:order-2">
+                    <button onclick="saveManually()" 
+                            class="btn-primary px-6 py-3 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17,21 17,13 7,13 7,21"/>
+                            <polyline points="7,3 7,8 15,8"/>
+                        </svg>
+                        Save Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSRF Token -->
+    {% csrf_token %}
+
+    <!-- JavaScript -->
+    <script>
+        // Configuration
+        const CONFIG = {
+            autoSaveDelay: 2000, // 2 seconds
+            listId: "{{ todo_list.pk }}",
+            maxChars: 10000,
+            endpoints: {
+                update: '/update-list/{{ todo_list.pk }}/',
+                toggle: '/toggle-list-completion/{{ todo_list.pk }}/'
+            }
+        };
+
+        // State management
+        let autoSaveTimeout;
+        let hasUnsavedChanges = false;
+        let originalValues = {};
+
+        // Initialize the note app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeNoteApp();
+            setupEventListeners();
+            setupAutoSave();
+            updateCharCounter();
+            
+            // Show content immediately when DOM is ready
+            showPageContent();
+        });
+
+        function showPageContent() {
+            const body = document.body;
+            const loadingScreen = document.getElementById('loadingScreen');
+            
+            // Add loaded class to show content
+            body.classList.add('page-loaded');
+            
+            // Hide loading screen
+            if (loadingScreen) {
+                loadingScreen.classList.add('fade-out');
+                setTimeout(() => {
+                    if (loadingScreen && loadingScreen.parentNode) {
+                        loadingScreen.remove();
+                    }
+                }, 500);
+            }
+        }
+
+        function initializeNoteApp() {
+            // Store original values
+            document.querySelectorAll('[data-field]').forEach(element => {
+                const field = element.dataset.field;
+                originalValues[field] = element.dataset.original || '';
+            });
+
+            // Setup placeholder behavior
+            const descriptionEl = document.querySelector('[data-field="description"]');
+            if (descriptionEl && !descriptionEl.textContent.trim()) {
+                descriptionEl.innerHTML = '<span class="text-slate-400">Start typing your notes here... You can add ideas, tasks, links, or anything else you need to remember.</span>';
+            }
+
+            console.log('Note app initialized');
+        }
+
+        function setupEventListeners() {
+            // Editable content listeners
+            document.querySelectorAll('.editable').forEach(element => {
+                element.addEventListener('focus', handleEditStart);
+                element.addEventListener('blur', handleEditEnd);
+                element.addEventListener('input', handleContentChange);
+                element.addEventListener('keydown', handleKeyDown);
+            });
+
+            // Input/textarea listeners
+            document.querySelectorAll('input[data-field], textarea[data-field]').forEach(element => {
+                element.addEventListener('input', handleContentChange);
+            });
+
+            // Prevent page leave with unsaved changes
+            window.addEventListener('beforeunload', function(e) {
+                if (hasUnsavedChanges) {
+                    e.preventDefault();
+                    e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+                }
+            });
+
+            // Auto-resize textareas
+            document.querySelectorAll('textarea').forEach(textarea => {
+                textarea.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = this.scrollHeight + 'px';
+                });
+            });
+        }
+
+        function setupAutoSave() {
+            // Auto-save every 30 seconds if there are changes
+            setInterval(function() {
+                if (hasUnsavedChanges) {
+                    saveChanges();
+                }
+            }, 30000);
+        }
+
+        function handleEditStart(e) {
+            const element = e.target;
+            element.classList.add('editing');
+            
+            // Clear placeholder for description
+            if (element.dataset.field === 'description') {
+                const placeholder = element.querySelector('.text-slate-400');
+                if (placeholder) {
+                    element.textContent = '';
+                }
+            }
+
+            // Update edit indicator
+            const indicator = element.querySelector('.edit-indicator');
+            if (indicator) {
+                indicator.textContent = 'Editing...';
+            }
+        }
+
+        function handleEditEnd(e) {
+            const element = e.target;
+            element.classList.remove('editing');
+
+            // Restore placeholder if empty
+            if (element.dataset.field === 'description' && !element.textContent.trim()) {
+                element.innerHTML = '<span class="text-slate-400">Start typing your notes here... You can add ideas, tasks, links, or anything else you need to remember.</span>';
+            }
+
+            // Update edit indicator
+            const indicator = element.querySelector('.edit-indicator');
+            if (indicator) {
+                indicator.textContent = 'Click to edit';
+            }
+
+            // Trigger auto-save
+            triggerAutoSave();
+        }
+
+        function handleContentChange(e) {
+            hasUnsavedChanges = true;
+            updateCharCounter();
+            triggerAutoSave();
+        }
+
+        function handleKeyDown(e) {
+            // Save on Ctrl+S
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                saveChanges();
+            }
+
+            // Handle Enter key for title
+            if (e.target.dataset.field === 'title' && e.key === 'Enter') {
+                e.preventDefault();
+                e.target.blur();
+            }
+        }
+
+        function triggerAutoSave() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(() => {
+                saveChanges();
+            }, CONFIG.autoSaveDelay);
+        }
+
+        function updateCharCounter() {
+            const descriptionEl = document.querySelector('[data-field="description"]');
+            const counterEl = document.getElementById('charCounter');
+            if (descriptionEl && counterEl) {
+                const length = descriptionEl.textContent.length;
+                counterEl.textContent = `${length} characters`;
+                
+                if (length > CONFIG.maxChars * 0.9) {
+                    counterEl.style.color = '#ef4444';
+                } else if (length > CONFIG.maxChars * 0.75) {
+                    counterEl.style.color = '#f59e0b';
+                } else {
+                    counterEl.style.color = 'rgba(255, 255, 255, 0.6)';
+                }
+            }
+        }
+
+        function saveChanges() {
+            if (!hasUnsavedChanges) return;
+
+            showSaveStatus('saving');
+
+            const data = {
+                title: document.querySelector('[data-field="title"]').textContent.trim(),
+                description: getCleanContent(document.querySelector('[data-field="description"]')),
+            };
+
+            fetch(CONFIG.endpoints.update, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken(),
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    hasUnsavedChanges = false;
+                    showSaveStatus('saved');
+                    console.log('Changes saved successfully');
+                } else {
+                    throw new Error(result.error || 'Failed to save');
+                }
+            })
+            .catch(error => {
+                console.error('Save error:', error);
+                showSaveStatus('error');
+            });
+        }
+
+        function saveManually() {
+            hasUnsavedChanges = true; // Force save
+            saveChanges();
+        }
+
+        function toggleCompletion() {
+            fetch(CONFIG.endpoints.toggle, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken(),
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update status badge
+                    const statusBadge = document.querySelector('.status-completed, .status-active');
+                    if (statusBadge) {
+                        if (data.completed) {
+                            statusBadge.className = 'px-4 py-2 rounded-full text-sm font-bold status-completed shadow-lg';
+                            statusBadge.innerHTML = '✓ Completed';
+                        } else {
+                            statusBadge.className = 'px-4 py-2 rounded-full text-sm font-bold status-active shadow-lg';
+                            statusBadge.innerHTML = '⚡ Active';
+                        }
+                    }
+                    showNotification(data.message, 'success');
+                } else {
+                    throw new Error(data.error || 'Failed to toggle completion');
+                }
+            })
+            .catch(error => {
+                console.error('Toggle error:', error);
+                showNotification('Failed to update completion status', 'error');
+            });
+        }
+
+        function formatText(command) {
+            document.execCommand(command, false, null);
+            triggerAutoSave();
+        }
+
+        function exportNote() {
+            const title = document.querySelector('[data-field="title"]').textContent.trim();
+            const description = getCleanContent(document.querySelector('[data-field="description"]'));
+
+            let content = `# ${title}\n\n`;
+            if (description) content += `${description}\n\n`;
+            content += `*Exported from Todo List App on ${new Date().toLocaleDateString()}*`;
+
+            const blob = new Blob([content], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${title.replace(/[^a-z0-9]/gi, '_')}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showNotification('Note exported successfully!', 'success');
+        }
+
+        // Utility functions
+        function getCsrfToken() {
+            const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+            const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            
+            if (csrfInput) return csrfInput.value;
+            if (csrfMeta) return csrfMeta.content;
+            
+            // Fallback to cookie
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'csrftoken') return value;
+            }
+            
+            console.error('CSRF token not found');
+            return '';
+        }
+
+        function getCleanContent(element) {
+            const clone = element.cloneNode(true);
+            const placeholders = clone.querySelectorAll('.text-slate-400');
+            placeholders.forEach(p => p.remove());
+            return clone.textContent.trim();
+        }
+
+        function showSaveStatus(status) {
+            const statusEl = document.getElementById('saveStatus');
+            statusEl.style.display = 'block';
+            statusEl.className = `save-status ${status}`;
+
+            switch (status) {
+                case 'saving':
+                    statusEl.innerHTML = '<div class="spinner"></div> Saving...';
+                    break;
+                case 'saved':
+                    statusEl.innerHTML = '✓ All changes saved';
+                    setTimeout(() => {
+                        statusEl.style.display = 'none';
+                    }, 2000);
+                    break;
+                case 'error':
+                    statusEl.innerHTML = '✗ Save failed - Try again';
+                    setTimeout(() => {
+                        statusEl.style.display = 'none';
+                    }, 3000);
+                    break;
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.notification-toast');
+            existingNotifications.forEach(notification => notification.remove());
+
+            const notification = document.createElement('div');
+            notification.className = `notification-toast fixed bottom-4 right-4 z-50 px-6 py-4 rounded-lg text-white font-medium transition-all duration-300 transform translate-x-full max-w-sm`;
+            
+            const colors = {
+                success: 'bg-green-500/90 border border-green-400/30',
+                error: 'bg-red-500/90 border border-red-400/30',
+                info: 'bg-blue-500/90 border border-blue-400/30'
+            };
+            
+            notification.className += ' ' + colors[type];
+            notification.style.backdropFilter = 'blur(10px)';
+            
+            notification.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-white/70 hover:text-white">×</button>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+
+            // Animate in
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 10);
+
+            // Auto remove after 4 seconds
+            setTimeout(() => {
+                if (document.contains(notification)) {
+                    notification.classList.add('translate-x-full');
+                    setTimeout(() => {
+                        if (document.contains(notification)) {
+                            notification.remove();
+                        }
+                    }, 300);
+                }
+            }, 4000);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + S to save
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveChanges();
+            }
+            
+            // Ctrl/Cmd + E to export
+            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                e.preventDefault();
+                exportNote();
+            }
+        });
+
+        // Fallback: Ensure page is shown even if DOMContentLoaded doesn't fire quickly
+        setTimeout(() => {
+            if (!document.body.classList.contains('page-loaded')) {
+                showPageContent();
+            }
+        }, 100);
+    </script>
+</body>
+
+{% endblock content %}

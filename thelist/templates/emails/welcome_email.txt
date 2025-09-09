@@ -1,0 +1,30 @@
+Welcome to {{ app_name }}!
+
+Hi {{ user.first_name|default:user.username }},
+
+Welcome to {{ app_name }}! We're thrilled to have you join our community of organized note-takers.
+
+Here's what you can do with {{ app_name }}:
+
+📝 Create & Organize Notes
+Write, edit, and organize your thoughts seamlessly
+
+🔍 Quick Search  
+Find any note instantly with our powerful search feature
+
+📱 Access Anywhere
+Your notes are always available, on any device
+
+🔒 Secure & Private
+Your notes are private and secure, just for you
+
+Ready to start taking notes? Visit: {{ site_url }}
+
+If you have any questions or need help getting started, don't hesitate to reach out to our support team.
+
+Happy note-taking!
+The {{ app_name }} Team
+
+---
+© 2024 {{ app_name }}. All rights reserved.
+You received this email because you signed up for {{ app_name }}.
